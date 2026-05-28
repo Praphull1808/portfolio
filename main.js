@@ -1,4 +1,4 @@
- console.log("JS WORKING");
+console.log("JS WORKING");
  // ==================== CUSTOM CURSOR ====================
         const cursorDot = document.querySelector('.cursor-dot');
         const cursorOutline = document.querySelector('.cursor-outline');
@@ -151,16 +151,19 @@
         // Counter animation
         gsap.utils.toArray('.counter').forEach(counter => {
             const target = parseInt(counter.getAttribute('data-target'));
+            const suffix = counter.getAttribute('data-suffix') || '';
             
             ScrollTrigger.create({
                 trigger: counter,
                 start: 'top 85%',
                 onEnter: () => {
-                    gsap.to(counter, {
-                        innerHTML: target,
+                    gsap.to({ val: 0 }, {
+                        val: target,
                         duration: 2,
-                        snap: { innerHTML: 1 },
-                        ease: 'power2.out'
+                        ease: 'power2.out',
+                        onUpdate: function() {
+                            counter.innerHTML = Math.round(this.targets()[0].val) + suffix;
+                        }
                     });
                 }
             });
@@ -274,97 +277,39 @@ function renderProjects() {
       
             
             // Submit Contact Form
-            document.getElementById('contact-form').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const btn = document.getElementById('submit-contact');
-                const spinner = document.getElementById('contact-spinner');
-                const name = document.getElementById('contact-name').value;
-                const email = document.getElementById('contact-email').value;
-                const subject = document.getElementById('contact-subject').value;
-                const message = document.getElementById('contact-message').value;
-                
-                btn.disabled = true;
-                spinner.classList.remove('hidden');
-                
-                try {
-                    await addDoc(collection(db, 'contacts'), {
-                        name,
-                        email,
-                        subject,
-                        message,
-                        timestamp: serverTimestamp()
-                    });
-                    
-                    showToast('Message sent successfully! I\'ll get back to you soon.');
-                    e.target.reset();
-                } catch (error) {
-                    showToast('Error sending message. Please try again.');
-                    console.error(error);
-                } finally {
-                    btn.disabled = false;
-                    spinner.classList.add('hidden');
-                }
-            });
+            // Submit Contact Form
+document.getElementById('contact-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const btn = document.getElementById('submit-contact');
+    const spinner = document.getElementById('contact-spinner');
+    const name = document.getElementById('contact-name').value;
+    const email = document.getElementById('contact-email').value;
+    const subject = document.getElementById('contact-subject').value;
+    const message = document.getElementById('contact-message').value;
+    
+    btn.disabled = true;
+    spinner.classList.remove('hidden');
+    
+    try {
+        const { collection, addDoc, serverTimestamp } = window.firebaseFuncs;
+        const db = window.firebaseDB;
+        
+        await addDoc(collection(db, 'contacts'), {
+            name, email, subject, message,
+            timestamp: serverTimestamp()
+        });
+        
+        showToast('Message sent successfully! I\'ll get back to you soon.');
+        e.target.reset();
+    } catch (error) {
+        showToast('Error sending message. Please try again.');
+        console.error(error);
+    } finally {
+        btn.disabled = false;
+        spinner.classList.add('hidden');
+    }
+});
        
-        
-        // Demo Testimonials (when Firebase is not configured)
-        function loadDemoTestimonials() {
-            const demoTestimonials = [
-                {
-                    name: 'Sarah Johnson',
-                    role: 'CEO, TechStart',
-                    message: 'Alex delivered an outstanding website that exceeded our expectations. His attention to detail and technical expertise are truly remarkable.',
-                    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face'
-                },
-                {
-                    name: 'Michael Chen',
-                    role: 'Product Manager, InnovateCo',
-                    message: 'Working with Alex was a game-changer for our product. He brought innovative solutions and delivered on time with exceptional quality.',
-                    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face'
-                },
-                {
-                    name: 'Emily Rodriguez',
-                    role: 'Founder, DesignHub',
-                    message: 'The best developer I have worked with. Alex understands both design and development, creating seamless user experiences.',
-                    avatar: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face'
-                }
-            ];
-            
-            renderTestimonials(demoTestimonials);
-            
-            document.getElementById('contact-form').addEventListener('submit', (e) => {
-                e.preventDefault();
-                showToast('Demo mode: Contact form submissions are simulated in demo mode.');
-                document.getElementById('contact-form').reset();
-            });
-        }
-        
-        // Render testimonials
-        function renderTestimonials(testimonials) {
-            const container = document.getElementById('testimonials-container');
-            if (!testimonials || testimonials.length === 0) {
-                container.innerHTML = '<div class="col-span-3 text-center text-slate-500 py-12">No testimonials yet. Be the first to share your experience!</div>';
-                return;
-            }
-            
-            container.innerHTML = testimonials.map(t => `
-                <div class="glass-card p-8 rounded-2xl reveal">
-                    <div class="flex items-center gap-4 mb-6">
-                        <img src="${t.avatar || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(t.name) + '&background=6366f1&color=fff'}" 
-                             alt="${t.name}" 
-                             class="w-14 h-14 rounded-full object-cover border-2 border-primary/30">
-                        <div>
-                            <div class="font-bold text-white">${t.name}</div>
-                            <div class="text-sm text-primary">${t.role}</div>
-                        </div>
-                    </div>
-                    <p class="text-slate-300 leading-relaxed italic">"${t.message}"</p>
-                    <div class="flex gap-1 mt-4">
-                        ${[1,2,3,4,5].map(() => `<svg class="w-4 h-4 text-yellow-500" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>`).join('')}
-                    </div>
-                </div>
-            `).join('');
-        }
         
         // Update visitor count display
         function updateVisitorCount(count) {
@@ -373,7 +318,40 @@ function renderProjects() {
                 el.textContent = count === 0 ? 'Demo Mode' : `${count.toLocaleString()} visitors`;
             }
         }
+        // Visitor Counter
+async function initVisitorCounter() {
+    const waitForFirebase = () => new Promise(resolve => {
+        const check = () => window.firebaseDB ? resolve() : setTimeout(check, 100);
+        check();
+    });
+
+    try {
+        await waitForFirebase();
         
+        const { doc, updateDoc, increment, onSnapshot } = window.firebaseFuncs;
+        const db = window.firebaseDB;
+        const counterRef = doc(db, 'visitors', 'counter');
+
+        try {
+            await updateDoc(counterRef, { count: increment(1) });
+        } catch(e) {
+            const { setDoc } = await import('https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js');
+            await setDoc(counterRef, { count: 1 });
+        }
+
+        onSnapshot(counterRef, (snap) => {
+            if (snap.exists()) {
+                updateVisitorCount(snap.data().count);
+            }
+        });
+    } catch(err) {
+        // Ad blocker ya network issue - silently hide counter
+        const el = document.getElementById('visitor-count');
+        if (el) el.closest('.visitor-counter').style.display = 'none';
+    }
+}
+
+initVisitorCounter();
         // Show toast notification
         function showToast(message) {
             const toast = document.getElementById('toast');
